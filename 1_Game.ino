@@ -3,13 +3,16 @@ class Game {
     byte isLeader;
     byte leaderFace;
     Color color;
+    bool isWinner;
     byte neighbors[FACE_COUNT];
+    
     Game() { init(); }
 
     void init() {
       isLeader = false;
       leaderFace = 0;
       color = YELLOW;
+      isWinner = false;
       FOREACH_FACE(f) { neighbors[f] = EMPTY; }
     }
 };
@@ -38,8 +41,8 @@ class GameState {
   public:
     
     void loop() {
-      loopForState();
       broadcastCurrentState();
+      loopForState();
       checkNeighborsForStateChange();
       checkAlone();
     }

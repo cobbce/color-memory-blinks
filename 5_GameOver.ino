@@ -5,7 +5,11 @@ class GameOver : public GameState {
     }
 
     void init() {
-      game->color = RED;
+      if (game->isWinner) {
+        game->color = GREEN;
+      } else {
+        game->color = RED;
+      }
     }
 
     void loopForState() {
