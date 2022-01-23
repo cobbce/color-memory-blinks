@@ -8,6 +8,7 @@ GameState* currentState;
 WaitingToStart w = WaitingToStart(game);
 SetupGame s = SetupGame(game);
 PlayGame p = PlayGame(game);
+PlayGameTile pgt = PlayGameTile(game);
 GameOver g = GameOver(game);
 
 ////////////////
@@ -23,7 +24,11 @@ void changeState(EGameState nextState) {
       currentState = &s;
       break;
     case PLAY_GAME:
-      currentState = &p;
+      if(game.isLeader) {
+        currentState = &p;
+      } else {
+        currentState = &pgt;
+      }
       break;
     case GAME_OVER:
       currentState = &g;

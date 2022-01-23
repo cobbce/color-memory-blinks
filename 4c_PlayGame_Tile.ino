@@ -1,5 +1,54 @@
+#define ETileState byte
 
-void PlayGame::runTile() {
+class PlayGameTile : public GameState {
+  public:
+    ETileState tileState;
+    Color assignedColor;
+    bool moveAcked;
+    Timer timer;
+
+    PlayGameTile(Game &game) : GameState(game, PLAY_GAME, GAME_OVER) {
+      init();
+    }
+
+    void init() {
+      tileState = TILE_SYNC_STATE;
+      assignedColor = game->color;
+      moveAcked = false;
+      
+      game->color = OFF;
+    }
+    
+    virtual void broadcastCurrentState() {
+      if (tileState == TILE_SYNC_STATE) {
+        setValueSentOnAllFaces(state);
+      }
+    }
+
+    virtual void loopForState() {
+      runTile();
+    }
+
+    ////////////////
+    // Tile
+    ////////////////
+    
+    void runTile();
+    void tileSyncState();
+
+    // move preview
+    void waitToShowMove();
+    void tileWaitForShowMoveDone();
+
+    // player move
+    void tileWaitForPlayerMove();
+    void waitForPlayerMoveAck();
+
+    // helpers
+    void showAssignedColor();
+    void turnOffColor();
+};
+void PlayGameTile::runTile() {
   switch(tileState) {
     case TILE_SYNC_STATE:
       tileSyncState();
@@ -17,13 +66,13 @@ void PlayGame::runTile() {
   }
 }
 
-void PlayGame::tileSyncState() {
+void PlayGameTile::tileSyncState() {
   if (getLastValueReceivedOnFace(game->leaderFace) == SYNC_STATE_DONE) {
     tileState = WAITING_TO_SHOW_MOVE;
   }
 }
 
-void PlayGame::waitToShowMove() {
+void PlayGameTile::waitToShowMove() {
   if (getLastValueReceivedOnFace(game->leaderFace) == SHOW_MOVE_FLAG) {
     setValueSentOnFace(SHOW_MOVE_FLAG, game->leaderFace);
     showAssignedColor();
@@ -34,7 +83,7 @@ void PlayGame::waitToShowMove() {
   }
 }
 
-void PlayGame::tileWaitForShowMoveDone() {
+void PlayGameTile::tileWaitForShowMoveDone() {
   if (timer.isExpired()) {
     setValueSentOnFace(SHOW_MOVE_DONE_FLAG, game->leaderFace);
     turnOffColor();
@@ -42,7 +91,7 @@ void PlayGame::tileWaitForShowMoveDone() {
   }
 }
 
-void PlayGame::tileWaitForPlayerMove() {
+void PlayGameTile::tileWaitForPlayerMove() {
   if (buttonSingleClicked()) {
     setValueSentOnFace(PLAYER_MOVED_FLAG, game->leaderFace);
     tileState = WAIT_FOR_PLAYER_MOVE_ACK;
@@ -53,7 +102,7 @@ void PlayGame::tileWaitForPlayerMove() {
   }
 }
 
-void PlayGame::waitForPlayerMoveAck() {
+void PlayGameTile::waitForPlayerMoveAck() {
   if (getLastValueReceivedOnFace(game->leaderFace) == PLAYER_MOVED_ACK) {
     setValueSentOnFace(PLAY_GAME, game->leaderFace);
     moveAcked = true;
@@ -65,12 +114,12 @@ void PlayGame::waitForPlayerMoveAck() {
   }
 }
 
-void PlayGame::showAssignedColor() {
+void PlayGameTile::showAssignedColor() {
   game->color = assignedColor;
   showColor();
 }
 
-void PlayGame::turnOffColor() {
+void PlayGameTile::turnOffColor() {
     game->color = OFF;
     showColor();
 }

@@ -1,4 +1,4 @@
-#define GAME_START_DELAY 2000
+#define GAME_START_DELAY 2500
 
 class SetupGame : public GameState {
   private:
@@ -12,7 +12,7 @@ class SetupGame : public GameState {
     }
 
     void init() {
-      game->color = MAGENTA;
+      game->color = OFF;
       neighborsInSetupState = false;
       setupComplete = false;
     }
@@ -96,7 +96,6 @@ void SetupGame::sendNeighborColors() {
 
     // send color assignment to tile
     byte colorIndex = getColorIndex(face);
-    setColorOnFace(getColorByIndex(colorIndex), face);
     setValueSentOnFace(colorIndex, face);
 
     if (neighborConfirmsColor(face, colorIndex)) {

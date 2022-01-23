@@ -5,7 +5,6 @@
 #define ACK_MOVE_DURATION 100
 
 #define ELeaderState byte
-#define ETileState byte
 
 enum leaderStates { 
     LEADER_SYNC_STATE, 
@@ -18,21 +17,14 @@ enum tileStates { TILE_SYNC_STATE, WAITING_TO_SHOW_MOVE, WAITING_FOR_SHOW_MOVE_D
 class PlayGame : public GameState {
   private:
     ELeaderState leaderState;
-    ETileState tileState;
     byte moves[MOVE_COUNT];
     Timer timer;
 
-    // Move preview state
     byte currentShownMove;
     byte currentTile;
 
-    // Player action state
     byte expectedPlayerMoveIndex;
     byte lastClickedFace;
-    bool moveAcked;
-
-    // tile state
-    Color assignedColor;
     
   public:
     PlayGame(Game &game) : GameState(game, PLAY_GAME, GAME_OVER) {
@@ -41,59 +33,33 @@ class PlayGame : public GameState {
 
     void init() {
       leaderState = LEADER_SYNC_STATE;
-      tileState = TILE_SYNC_STATE;
       for (byte i = 0; i < MOVE_COUNT; i++) { moves[MOVE_COUNT] = 0; }
       
-      // Move preview state
       currentShownMove = 0;
       currentTile = 0;
       
-      // Player move state
       expectedPlayerMoveIndex = 0;
       lastClickedFace = EMPTY;
-      moveAcked = false;
       
-      if (game->isLeader) {
-        setupMoves();
-        assignedColor = OFF;
-      } else {
-        assignedColor = game->color;
-      }
+      setupMoves();
       printArray(moves, MOVE_COUNT);
 
       game->color = OFF;
     }
     
     virtual void broadcastCurrentState() {
-      bool leaderBroadcastState = game->isLeader && leaderState == LEADER_SYNC_STATE;
-      bool tileBroadcastState = !game->isLeader && tileState == TILE_SYNC_STATE;
-      
-      if (leaderBroadcastState || tileBroadcastState) {
+      if (leaderState == LEADER_SYNC_STATE) {
         setValueSentOnAllFaces(state);
       }
     }
-
-    void setupMoves() {
-      byte gameTile[REQUIRED_NEIGHBOR_COUNT];
-      int tileOffset = 0;
-      
-      FOREACH_FACE(face) {
-        if (game->neighbors[face] != EMPTY) {
-          gameTile[tileOffset++] = face;
-        }
-      }
-      
-      for (byte i = 0; i < MOVE_COUNT; i++) {
-        byte pickedTile = random(REQUIRED_NEIGHBOR_COUNT - 1);
-        moves[i] = gameTile[pickedTile];
-      }
+    
+    virtual void loopForState() {
+      checkButtonForStateChange(GAME_OVER);
+      runGame();
     }
-
-    ////////////////
-    // Leader
-    ////////////////
     
     void runGame();
+    
     void synchronizeState();
 
     // move preview
@@ -114,46 +80,19 @@ class PlayGame : public GameState {
     void gameOver(bool isWinner);
     void startAckMove(byte face);
 
-
-    ////////////////
-    // Tile
-    ////////////////
-    
-    void runTile();
-    void tileSyncState();
-
-    // move preview
-    void waitToShowMove();
-    void tileWaitForShowMoveDone();
-
-    // player move
-    void tileWaitForPlayerMove();
-    void waitForPlayerMoveAck();
-
-    // helpers
-    void showAssignedColor();
-    void turnOffColor();
-    
-    ////////////////
-    // Loop
-    ////////////////
-
-    void loopForState() {
-      if (game->isLeader) {
-        checkButtonForStateChange(GAME_OVER);
-        runGame();
-      } else {
-        runTile();
+    void setupMoves() {
+      byte gameTile[REQUIRED_NEIGHBOR_COUNT];
+      int tileOffset = 0;
+      
+      FOREACH_FACE(face) {
+        if (game->neighbors[face] != EMPTY) {
+          gameTile[tileOffset++] = face;
+        }
       }
-    }
-
-    void printArray(byte* byteArray, byte arrayLength) {
-      for(byte i = 0; i < arrayLength; i++) {
-          Serial.print(i); Serial.print(": "); Serial.println(byteArray[i]);
+      
+      for (byte i = 0; i < MOVE_COUNT; i++) {
+        byte pickedTile = random(REQUIRED_NEIGHBOR_COUNT - 1);
+        moves[i] = gameTile[pickedTile];
       }
-    }
-
-    debugPrintFace(const Color& color, const byte& face) {
-      setColorOnFace(color, face);
     }
 };
