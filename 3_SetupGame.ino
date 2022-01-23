@@ -1,4 +1,33 @@
-void SetupGame::loopForState() {  
+#define GAME_START_DELAY 3000
+
+class SetupGame : public GameState {
+  private:
+    bool neighborsInSetupState;
+    bool setupComplete;
+    Timer gameStartTimer;
+  
+  public:
+    SetupGame(Game &game) : GameState(game, SETUP_GAME, PLAY_GAME) {
+      init();
+    }
+
+    void init() {
+      game->color = MAGENTA;
+      neighborsInSetupState = false;
+      setupComplete = false;
+    }
+    
+    void loopForState();
+    void broadcastCurrentState();
+    
+  private:
+    void setupLeader();
+    void setupNeighbor();
+    bool neighborsAreInSetupState();
+    void sendNeighborColors();
+};
+
+void SetupGame::loopForState() {
   if (game->isLeader) {
     setupLeader();
   } else {
@@ -21,7 +50,9 @@ void SetupGame::broadcastCurrentState() {
 
 void SetupGame::setupLeader() {
   if (setupComplete) {
-    checkButtonForStateChange(PLAY_GAME);
+    if (gameStartTimer.isExpired()) {
+      changeState(PLAY_GAME);
+    }
     return;
   }
     
@@ -37,20 +68,20 @@ bool SetupGame::neighborsAreInSetupState() {
   }
   
   byte neighborsReadyCount = 0;
-  
   FOREACH_FACE(face) {
     if (EMPTY == game->neighbors[face]) {
       continue;
     }
     
     if (getNeighborState(face) == SETUP_GAME) {
-      neighborsInSetup[face] = 1;
+      game->neighbors[face] = IN_SETUP;
       neighborsReadyCount++;
     }
   }
   
   if (neighborsReadyCount == REQUIRED_NEIGHBOR_COUNT) {
     neighborsInSetupState = true;
+//    Serial.println("neighborsInSetupState true");
   }
   return neighborsInSetupState;
 }
@@ -68,17 +99,21 @@ void SetupGame::sendNeighborColors() {
     setColorOnFace(getColorByIndex(colorIndex), face);
     setValueSentOnFace(colorIndex, face);
 
-    // check if color assignment is confirmed
-    if (getLastValueReceivedOnFace(face) == colorIndex) {
-      neighborsInSetup[face] = 2;
+    if (neighborConfirmsColor(face, colorIndex)) {
+      game->neighbors[face] = READY_TO_PLAY;
       neighborsAcknowledged++;
     }
   }
 
   if (neighborsAcknowledged == REQUIRED_NEIGHBOR_COUNT) {
+//    Serial.println("leader setup complete");
     setupComplete = true;
-    debugPrint("setup complete for leader");
+    gameStartTimer.set(GAME_START_DELAY);
   }
+}
+
+bool neighborConfirmsColor(const byte& face, const byte& colorIndex) {
+  return getLastValueReceivedOnFace(face) == colorIndex;
 }
 
 ////////////////
@@ -95,10 +130,10 @@ void SetupGame::setupNeighbor() {
       byte neighborState = getNeighborState(face);
 
       // check for assigned color from leader
-      if (neighborState >= COLOR_OFFSET) {
+      if (neighborState >= COLOR_OFFSET && neighborState <= COLOR_OFFSET_END) {
+        game->leaderFace = face;
         setupComplete = true;
-        
-        color = getColorByIndex(neighborState);
+        game->color = getColorByIndex(neighborState);
         showColor();
 
         // send color index back to acknowledge

@@ -10,11 +10,6 @@ SetupGame s = SetupGame(game);
 PlayGame p = PlayGame(game);
 GameOver g = GameOver(game);
 
-GameState* waitingToStart = &w;
-GameState* setupGame = &s;
-GameState* playGame = &p;
-GameState* gameOver = &g;
-
 ////////////////
 // Utils
 ////////////////
@@ -22,20 +17,20 @@ GameState* gameOver = &g;
 void changeState(EGameState nextState) {
   switch(nextState) {
     case WAITING_TO_START:
-      currentState = waitingToStart;
+      currentState = &w;
       break;
     case SETUP_GAME:
-      currentState = setupGame;
+      currentState = &s;
       break;
     case PLAY_GAME:
-      currentState = playGame;
+      currentState = &p;
       break;
     case GAME_OVER:
-      currentState = gameOver;
+      currentState = &g;
       break;
   }
 
-  currentState->initState();
+  currentState->init();
   currentState->showColor();
 }
 
@@ -44,6 +39,7 @@ void changeState(EGameState nextState) {
 ////////////////
 
 void setup() {
+//  randomize();
   Serial.begin();
   changeState(WAITING_TO_START);
 }
