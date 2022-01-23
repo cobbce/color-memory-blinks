@@ -6,8 +6,8 @@ class WaitingToStart : public GameState {
       init();
     }
 
-    void init() {
-      game->color = YELLOW;
+    virtual void init() {
+      setColor(YELLOW);
       game->init();
     }
     
@@ -15,7 +15,7 @@ class WaitingToStart : public GameState {
       setValueSentOnAllFaces(state);
     }
     
-    void loopForState();
+    virtual void loopForState();
   private:
     bool requiredNeighborCount();
     bool initializeLeader();

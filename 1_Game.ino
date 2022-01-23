@@ -2,7 +2,7 @@ class Game {
   public:
     byte isLeader;
     byte leaderFace;
-    Color color;
+    Color assignedTileColor;
     bool isWinner;
     byte neighbors[FACE_COUNT];
     
@@ -11,7 +11,7 @@ class Game {
     void init() {
       isLeader = false;
       leaderFace = 0;
-      color = YELLOW;
+      assignedTileColor = OFF;
       isWinner = false;
       FOREACH_FACE(f) { neighbors[f] = EMPTY; }
     }
@@ -47,9 +47,9 @@ class GameState {
       checkAlone();
     }
     
-    void showColor() {
-      setColor(game->color);
-    }
+//    void showColor() {
+//      setColor(game->color);
+//    }
     
     EGameState getGameState();
     

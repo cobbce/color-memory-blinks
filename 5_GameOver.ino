@@ -4,19 +4,19 @@ class GameOver : public GameState {
       init();
     }
 
-    void init() {
+    void init() override {
       if (game->isWinner) {
-        game->color = GREEN;
+        setColor(GREEN);
       } else {
-        game->color = RED;
+        setColor(RED);
       }
     }
 
-    void loopForState() {
+    void loopForState() override {
       checkButtonForStateChange(WAITING_TO_START);
     }
     
-    virtual void broadcastCurrentState() {
+    void broadcastCurrentState() override {
       setValueSentOnAllFaces(state);
     }
 };

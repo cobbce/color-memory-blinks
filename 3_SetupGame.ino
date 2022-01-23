@@ -11,14 +11,14 @@ class SetupGame : public GameState {
       init();
     }
 
-    void init() {
-      game->color = OFF;
+    virtual void init() {
       neighborsInSetupState = false;
       setupComplete = false;
+      setColor(OFF);
     }
     
-    void loopForState();
-    void broadcastCurrentState();
+    virtual void loopForState();
+    virtual void broadcastCurrentState();
     
   private:
     void setupLeader();
@@ -132,8 +132,8 @@ void SetupGame::setupNeighbor() {
       if (neighborState >= COLOR_OFFSET && neighborState <= COLOR_OFFSET_END) {
         game->leaderFace = face;
         setupComplete = true;
-        game->color = getColorByIndex(neighborState);
-        showColor();
+        game->assignedTileColor = getColorByIndex(neighborState);
+        setColor(game->assignedTileColor);
 
         // send color index back to acknowledge
         setValueSentOnFace(neighborState, face);

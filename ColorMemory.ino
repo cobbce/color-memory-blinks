@@ -54,12 +54,6 @@ byte getNeighborState(byte face) {
   return getLastValueReceivedOnFace(face);
 }
 
-void printArray(byte* byteArray, byte arrayLength) {
-  for(byte i = 0; i < arrayLength; i++) {
-      Serial.print(i); Serial.print(": "); Serial.println(byteArray[i]);
-  }
-}
-
 void debugPrintFace(Color color, byte face) {
   setColorOnFace(color, face);
 }

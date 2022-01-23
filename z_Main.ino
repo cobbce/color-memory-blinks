@@ -36,7 +36,6 @@ void changeState(EGameState nextState) {
   }
 
   currentState->init();
-  currentState->showColor();
 }
 
 ////////////////
