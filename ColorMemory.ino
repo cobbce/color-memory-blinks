@@ -3,7 +3,7 @@
 ServicePortSerial Serial;
 
 #define EGameState byte
-#define REQUIRED_NEIGHBOR_COUNT 3
+#define REQUIRED_NEIGHBOR_COUNT 4
 #define EMPTY 255
 #define EXISTS 1
 #define IN_SETUP 2

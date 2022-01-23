@@ -39,7 +39,7 @@ void changeState(EGameState nextState) {
 ////////////////
 
 void setup() {
-//  randomize();
+  randomize();
   Serial.begin();
   changeState(WAITING_TO_START);
 }

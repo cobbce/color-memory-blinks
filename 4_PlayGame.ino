@@ -1,12 +1,18 @@
-#define MOVE_COUNT 3
+#define MOVE_COUNT 6
 #define SHOW_MOVE_DURATION 1100
 #define PAUSE_BETWEEN_SHOWN_MOVES 300
 #define PLAY_GAME_DELAY 2000
+#define ACK_MOVE_DURATION 100
 
 #define ELeaderState byte
 #define ETileState byte
 
-enum leaderStates { LEADER_SYNC_STATE, PAUSING_BEFORE_FIRST_SHOW_MOVE, SENDING_SHOW_MOVE, WAITING_FOR_TILE_ACK, WAITING_FOR_TILE_DONE, PAUSING_BEFORE_NEXT_SHOW_MOVE, WAITING_FOR_PLAYER_MOVE, ENDING_GAME, END_GAME };
+enum leaderStates { 
+    LEADER_SYNC_STATE, 
+    PAUSING_BEFORE_FIRST_SHOW_MOVE, SENDING_SHOW_MOVE, WAITING_FOR_TILE_ACK, WAITING_FOR_TILE_DONE, PAUSING_BEFORE_NEXT_SHOW_MOVE, 
+    WAITING_FOR_PLAYER_MOVE, ACK_PLAYER_MOVE,
+    ENDING_GAME, END_GAME
+};
 enum tileStates { TILE_SYNC_STATE, WAITING_TO_SHOW_MOVE, WAITING_FOR_SHOW_MOVE_DONE, TILE_WAITING_FOR_PLAYER_MOVE, WAIT_FOR_PLAYER_MOVE_ACK };
 
 class PlayGame : public GameState {
@@ -23,6 +29,7 @@ class PlayGame : public GameState {
     // Player action state
     byte expectedPlayerMoveIndex;
     byte lastClickedFace;
+    bool moveAcked;
 
     // tile state
     Color assignedColor;
@@ -48,6 +55,7 @@ class PlayGame : public GameState {
       // Player action state
       expectedPlayerMoveIndex = 0;
       lastClickedFace = EMPTY;
+      moveAcked = false;
       
       if (game->isLeader) {
         setupMoves();
@@ -55,6 +63,7 @@ class PlayGame : public GameState {
       } else {
         assignedColor = game->color;
       }
+      printMoves();
 
       game->color = OFF;
     }
@@ -124,6 +133,9 @@ class PlayGame : public GameState {
           break;
         case WAITING_FOR_PLAYER_MOVE:
           waitForPlayerMove();
+          break;
+        case ACK_PLAYER_MOVE:
+          ackPlayerMove();
           break;
         case ENDING_GAME:
           endingGame();
@@ -197,33 +209,24 @@ class PlayGame : public GameState {
       }
     }
 
-    void updateLastClickedFace(const byte& face) {
-      if (lastClickedFace != EMPTY) {
-        setValueSentOnFace(PLAY_GAME, lastClickedFace);
-      }
-      lastClickedFace = face;
-    }
-
-    void setClickDelay() {
-      timer.set(150);
-    }
-
     void gameOver(bool isWinner) {
       game->isWinner = isWinner;
       leaderState = ENDING_GAME;
-      timer.set(50);
+      timer.set(100);
+    }
+
+    void startAckMove(byte face) {
+      setValueSentOnFace(PLAYER_MOVED_ACK, face);
+      timer.set(ACK_MOVE_DURATION);
+      lastClickedFace = face;
+      leaderState = ACK_PLAYER_MOVE;
     }
       
     void waitForPlayerMove() {
-      if (!timer.isExpired()) {
-        return;
-      }
       FOREACH_FACE(face) {
         if (getLastValueReceivedOnFace(face) == PLAYER_MOVED_FLAG) {
           Serial.print("clicked: "); Serial.println(face);
-          setValueSentOnFace(PLAYER_MOVED_ACK, face);
-          updateLastClickedFace(face);
-          setClickDelay();
+          startAckMove(face);
           if (face == moves[expectedPlayerMoveIndex]) {
             expectedPlayerMoveIndex++;
             if (expectedPlayerMoveIndex == MOVE_COUNT) {
@@ -236,12 +239,22 @@ class PlayGame : public GameState {
       }
     }
 
+    void ackPlayerMove() {
+      if (!timer.isExpired()) {
+        return;
+      }
+      setValueSentOnFace(PLAY_GAME, lastClickedFace);
+      lastClickedFace = EMPTY;
+      leaderState = WAITING_FOR_PLAYER_MOVE;
+    }
+
     void endingGame() {
       if(timer.isExpired()) {
         if(game->isWinner) {
           setValueSentOnAllFaces(GAME_WON);
-          timer.set(100);
         }
+        timer.set(200);
+        leaderState = END_GAME;
       }
     }
 
@@ -312,9 +325,10 @@ class PlayGame : public GameState {
       if (buttonSingleClicked()) {
         setValueSentOnFace(PLAYER_MOVED_FLAG, game->leaderFace);
         tileState = WAIT_FOR_PLAYER_MOVE_ACK;
-        timer.set(300);
+        timer.set(ACK_MOVE_DURATION);
         showAssignedColor();
       } else if (getLastValueReceivedOnFace(game->leaderFace) == GAME_WON) {
+        Serial.println("GAME_WON");
         game->isWinner = true;
       }
     }
@@ -322,10 +336,12 @@ class PlayGame : public GameState {
     void waitForPlayerMoveAck() {
       if (getLastValueReceivedOnFace(game->leaderFace) == PLAYER_MOVED_ACK) {
         setValueSentOnFace(PLAY_GAME, game->leaderFace);
-        if (timer.isExpired()) {
-          turnOffColor();
-          tileState = TILE_WAITING_FOR_PLAYER_MOVE;
-        }
+        moveAcked = true;
+      }
+      if (moveAcked && timer.isExpired()) {
+        turnOffColor();
+        moveAcked = false;
+        tileState = TILE_WAITING_FOR_PLAYER_MOVE;
       }
     }
 
@@ -342,10 +358,8 @@ class PlayGame : public GameState {
     }
 
     void printMoves() {
-      char output[10];
       for(byte i = 0; i < MOVE_COUNT; i++) {
-          sprintf(output, "%d: %d", i, moves[i]);
-          Serial.println(output);
+          Serial.print(i); Serial.print(": "); Serial.println(moves[i]);
       }
     }
 
