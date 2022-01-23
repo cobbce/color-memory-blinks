@@ -13,6 +13,7 @@ ServicePortSerial Serial;
 #define COLOR_OFFSET 10
 #define COLOR_OFFSET_END 19
 #define SHOW_MOVE_FLAG 20
+#define SHOW_MOVE_DONE_FLAG 21
 
 
 enum gameStates { WAITING_TO_START, SETUP_GAME, PLAY_GAME, GAME_OVER };
@@ -44,6 +45,6 @@ bool hasNeighbor(byte face) {
   return !isValueReceivedOnFaceExpired(face);
 }
 
-byte SHOW_MOVE_DONE_FLAG(byte face) {
+byte getNeighborState(byte face) {
   return getLastValueReceivedOnFace(face);
 }

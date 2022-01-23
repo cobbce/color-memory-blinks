@@ -203,7 +203,7 @@ class PlayGame : public GameState {
         game->color = assignedColor;
         showColor();
         setValueSentOnFace(SHOW_MOVE_FLAG, game->leaderFace);
-        timer.set(SHOW_MOVE_DURATION)
+        timer.set(SHOW_MOVE_DURATION);
         tileState = WAITING_FOR_SHOW_MOVE_DONE;
       } else {
         setColorOnFace(RED, game->leaderFace);
