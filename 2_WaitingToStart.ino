@@ -39,7 +39,11 @@ bool WaitingToStart::requiredNeighborCount() {
       neighborCount++;
     }
   }
-  return neighborCount == REQUIRED_NEIGHBOR_COUNT;
+  if (neighborCount >= MIN_NEIGHBOR_COUNT) {
+    game->tileCount = neighborCount;
+    return true;
+  }
+  return false;
 }
 
 static void WaitingToStart::countNeighbors(Game* game, byte face) {

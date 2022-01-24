@@ -1,6 +1,6 @@
 #define ETileState byte
 
-#define SHOW_MOVE_DURATION 1100
+#define SHOW_MOVE_DURATION 800
 
 enum tileStates { TILE_SYNC_STATE, WAIT_FOR_SHOW_MOVE, TILE_WAIT_FOR_SHOW_MOVE_DONE, TILE_WAIT_FOR_PLAYER_MOVE, WAIT_FOR_PLAYER_MOVE_ACK };
 
@@ -18,7 +18,7 @@ class PlayGameTile : public GameState {
     void init() override {
       tileState = TILE_SYNC_STATE;
       assignedColor = game->assignedTileColor;
-      moveAcked = false;
+      moveAcked = false; 
       
       setColor(OFF);
     }
@@ -103,6 +103,8 @@ void PlayGameTile::waitForPlayerMove() {
     showAssignedColor();
   } else if (getLastValueReceivedOnFace(game->leaderFace) == GAME_WON) {
     game->isWinner = true;
+  } else if (getLastValueReceivedOnFace(game->leaderFace) == NEW_TURN_STARTED) {
+    tileState = WAIT_FOR_SHOW_MOVE;
   }
 }
 

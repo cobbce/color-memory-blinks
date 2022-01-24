@@ -79,7 +79,7 @@ bool SetupGame::neighborsAreInSetupState() {
     }
   }
   
-  if (neighborsReadyCount == REQUIRED_NEIGHBOR_COUNT) {
+  if (neighborsReadyCount == game->tileCount) {
     neighborsInSetupState = true;
 //    Serial.println("neighborsInSetupState true");
   }
@@ -104,7 +104,7 @@ void SetupGame::sendNeighborColors() {
     }
   }
 
-  if (neighborsAcknowledged == REQUIRED_NEIGHBOR_COUNT) {
+  if (neighborsAcknowledged == game->tileCount) {
 //    Serial.println("leader setup complete");
     setupComplete = true;
     gameStartTimer.set(GAME_START_DELAY);

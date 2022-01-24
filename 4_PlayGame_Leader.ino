@@ -1,6 +1,6 @@
-#define MOVE_COUNT 4
-#define PAUSE_BETWEEN_SHOWN_MOVES 300
-#define PLAY_GAME_DELAY 2000
+#define MOVE_COUNT 10
+#define PAUSE_BETWEEN_SHOWN_MOVES 150
+#define PLAY_GAME_DELAY 1100
 #define ACK_MOVE_DURATION 100
 
 #define ELeaderState byte
@@ -16,6 +16,7 @@ class PlayGame : public GameState {
   private:
     ELeaderState leaderState;
     byte moves[MOVE_COUNT];
+    byte currentMoveCount;
     Timer timer;
 
     byte currentShownMove;
@@ -33,6 +34,7 @@ class PlayGame : public GameState {
       leaderState = LEADER_SYNC_STATE;
       for (byte i = 0; i < MOVE_COUNT; i++) { moves[MOVE_COUNT] = 0; }
       
+      currentMoveCount = 1;
       currentShownMove = 0;
       currentTile = 0;
       
@@ -42,6 +44,7 @@ class PlayGame : public GameState {
       setupMoves();
       printArray(moves, MOVE_COUNT);
 
+      setColor(dim(WHITE, 122));
       setColor(OFF);
     }
     
@@ -78,9 +81,14 @@ class PlayGame : public GameState {
     void gameOver(bool isWinner);
     void startAckMove(byte face);
     void printArray(byte* byteArray, byte arrayLength);
+    void startWaitingForPlayerMove();
+    bool isGameOver();
+    bool isCorrectMove(byte face);
+    void startNewTurn();
+    void checkTurnOver();
 
     void setupMoves() {
-      byte gameTile[REQUIRED_NEIGHBOR_COUNT];
+      byte gameTile[game->tileCount];
       int tileOffset = 0;
       
       FOREACH_FACE(face) {
@@ -90,7 +98,7 @@ class PlayGame : public GameState {
       }
       
       for (byte i = 0; i < MOVE_COUNT; i++) {
-        byte pickedTile = random(REQUIRED_NEIGHBOR_COUNT - 1);
+        byte pickedTile = random(tileOffset - 1);
         moves[i] = gameTile[pickedTile];
       }
     }
@@ -139,11 +147,15 @@ void PlayGame::synchronizeState() {
     }
   }
 
-  if (neighborsInPlayGameState == REQUIRED_NEIGHBOR_COUNT) {
+  if (neighborsInPlayGameState == game->tileCount) {
     setValueSentOnAllFaces(SYNC_STATE_DONE);
+    startNewTurn();
+  }
+}
+
+void PlayGame::startNewTurn() {
     leaderState = PAUSE_BEFORE_FIRST_SHOW_MOVE;
     timer.set(PLAY_GAME_DELAY);
-  }
 }
 
 void PlayGame::pauseBeforeFirstShowMove() {
@@ -175,10 +187,8 @@ void PlayGame::waitForShowMoveDone() {
 void PlayGame::pauseBeforeShowingNextMove() {
   if (timer.isExpired()) {
     currentShownMove++;
-    if (currentShownMove == MOVE_COUNT) {
-      expectedPlayerMoveIndex = 0;
-      leaderState = WAITING_FOR_PLAYER_MOVE;
-      sendPlayerTurnStarted();
+    if (currentShownMove == currentMoveCount) {
+      startWaitingForPlayerMove();
     } else {
       leaderState = SEND_SHOW_MOVE;
     }
@@ -191,25 +201,59 @@ void PlayGame::waitForPlayerMove() {
     if (getLastValueReceivedOnFace(face) == PLAYER_MOVED_FLAG) {
       Serial.print("clicked: "); Serial.println(face);
       startAckMove(face);
-      if (face == moves[expectedPlayerMoveIndex]) {
-        expectedPlayerMoveIndex++;
-        if (expectedPlayerMoveIndex == MOVE_COUNT) {
-          gameOver(true);
-        }
-      } else {
-          gameOver(false);
-      }
     }
   }
 }
+
+void PlayGame::startAckMove(byte face) {
+  setValueSentOnFace(PLAYER_MOVED_ACK, face);
+  timer.set(ACK_MOVE_DURATION);
+  lastClickedFace = face;
+  leaderState = ACK_PLAYER_MOVE;
+}
+
 
 void PlayGame::ackPlayerMove() {
   if (!timer.isExpired()) {
     return;
   }
+
   setValueSentOnFace(PLAY_GAME, lastClickedFace);
+
+  if (isCorrectMove(lastClickedFace)) {
+    if (!isGameOver()) {
+      checkTurnOver();
+    }
+  } else {
+    gameOver(false);
+  }
+  
   lastClickedFace = EMPTY;
-  leaderState = WAITING_FOR_PLAYER_MOVE;
+}
+
+bool PlayGame::isCorrectMove(byte face) {
+  return face == moves[expectedPlayerMoveIndex++];
+}
+
+bool PlayGame::isGameOver() {
+  if (expectedPlayerMoveIndex == MOVE_COUNT) {
+    gameOver(true);
+    return true;
+  }
+  return false;
+}
+
+void PlayGame::checkTurnOver() {
+  if (expectedPlayerMoveIndex == currentMoveCount) {
+    currentMoveCount++;
+    currentShownMove = 0;
+    currentTile = 0;
+    expectedPlayerMoveIndex = 0;
+    setValueSentOnAllFaces(NEW_TURN_STARTED);
+    startNewTurn();
+  } else {
+    leaderState = WAITING_FOR_PLAYER_MOVE;
+  }
 }
 
 void PlayGame::endingGame() {
@@ -228,21 +272,16 @@ void PlayGame::endGame() {
   }
 }
 
-void PlayGame::sendPlayerTurnStarted() {
-  setValueSentOnAllFaces(PLAYER_TURN_STARTED);
-}
-
 void PlayGame::gameOver(bool isWinner) {
   game->isWinner = isWinner;
   leaderState = ENDING_GAME;
   timer.set(100);
 }
 
-void PlayGame::startAckMove(byte face) {
-  setValueSentOnFace(PLAYER_MOVED_ACK, face);
-  timer.set(ACK_MOVE_DURATION);
-  lastClickedFace = face;
-  leaderState = ACK_PLAYER_MOVE;
+void PlayGame::startWaitingForPlayerMove() {
+    expectedPlayerMoveIndex = 0;
+    leaderState = WAITING_FOR_PLAYER_MOVE;
+    setValueSentOnAllFaces(PLAYER_TURN_STARTED);
 }
 
 void PlayGame::printArray(byte* byteArray, byte arrayLength) {

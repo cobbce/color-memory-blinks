@@ -3,7 +3,7 @@
 ServicePortSerial Serial;
 
 #define EGameState byte
-#define REQUIRED_NEIGHBOR_COUNT 3
+#define MIN_NEIGHBOR_COUNT 2
 #define EMPTY 255
 #define EXISTS 1
 #define IN_SETUP 2
@@ -19,6 +19,7 @@ ServicePortSerial Serial;
 #define PLAYER_MOVED_FLAG 23
 #define PLAYER_MOVED_ACK 24
 #define GAME_WON 25
+#define NEW_TURN_STARTED 26
 
 
 enum gameStates { WAITING_TO_START, SETUP_GAME, PLAY_GAME, GAME_OVER };

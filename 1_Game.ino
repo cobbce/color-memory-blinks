@@ -1,19 +1,26 @@
 class Game {
   public:
+    //universal state
+    bool isWinner;
+    
+    //leader state
+    byte neighbors[FACE_COUNT];
     byte isLeader;
+    byte tileCount;
+
+    //tile state
     byte leaderFace;
     Color assignedTileColor;
-    bool isWinner;
-    byte neighbors[FACE_COUNT];
     
     Game() { init(); }
 
     void init() {
-      isLeader = false;
-      leaderFace = 0;
-      assignedTileColor = OFF;
       isWinner = false;
       FOREACH_FACE(f) { neighbors[f] = EMPTY; }
+      isLeader = false;
+      tileCount = 0;
+      leaderFace = 0;
+      assignedTileColor = OFF;
     }
 };
 
