@@ -1,4 +1,4 @@
-#define GAME_START_DELAY 2500
+#define GAME_START_DELAY 1500
 
 class SetupGame : public GameState {
   private:

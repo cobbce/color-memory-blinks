@@ -1,6 +1,7 @@
 #define ETileState byte
 
-#define SHOW_MOVE_DURATION 800
+#define SHOW_MOVE_DURATION 850
+#define MIN_SHOW_MOVE_DURATION 400
 
 enum tileStates { TILE_SYNC_STATE, WAIT_FOR_SHOW_MOVE, TILE_WAIT_FOR_SHOW_MOVE_DONE, TILE_WAIT_FOR_PLAYER_MOVE, WAIT_FOR_PLAYER_MOVE_ACK };
 
@@ -9,6 +10,7 @@ class PlayGameTile : public GameState {
     ETileState tileState;
     Color assignedColor;
     bool moveAcked;
+    byte turnCount;
     Timer timer;
 
     PlayGameTile(Game &game) : GameState(game, PLAY_GAME, GAME_OVER) {
@@ -18,7 +20,8 @@ class PlayGameTile : public GameState {
     void init() override {
       tileState = TILE_SYNC_STATE;
       assignedColor = game->assignedTileColor;
-      moveAcked = false; 
+      moveAcked = false;
+      turnCount = 0;
       
       setColor(OFF);
     }
@@ -32,10 +35,6 @@ class PlayGameTile : public GameState {
     void loopForState() override {
       runTile();
     }
-
-    ////////////////
-    // Tile
-    ////////////////
     
     void runTile();
     void tileSyncState();
@@ -51,6 +50,7 @@ class PlayGameTile : public GameState {
     // helpers
     void showAssignedColor();
     void turnOffColor();
+    void startTurn();
 };
 void PlayGameTile::runTile() {
   switch(tileState) {
@@ -72,7 +72,7 @@ void PlayGameTile::runTile() {
 
 void PlayGameTile::tileSyncState() {
   if (getLastValueReceivedOnFace(game->leaderFace) == SYNC_STATE_DONE) {
-    tileState = WAIT_FOR_SHOW_MOVE;
+    startTurn();
   }
 }
 
@@ -80,7 +80,7 @@ void PlayGameTile::waitToShowMove() {
   if (getLastValueReceivedOnFace(game->leaderFace) == SHOW_MOVE_FLAG) {
     setValueSentOnFace(SHOW_MOVE_FLAG, game->leaderFace);
     showAssignedColor();
-    timer.set(SHOW_MOVE_DURATION);
+    timer.set(max(SHOW_MOVE_DURATION - (50 * turnCount), MIN_SHOW_MOVE_DURATION));
     tileState = TILE_WAIT_FOR_SHOW_MOVE_DONE;
   } else if (getLastValueReceivedOnFace(game->leaderFace) == PLAYER_TURN_STARTED) {
     tileState = TILE_WAIT_FOR_PLAYER_MOVE;
@@ -104,7 +104,7 @@ void PlayGameTile::waitForPlayerMove() {
   } else if (getLastValueReceivedOnFace(game->leaderFace) == GAME_WON) {
     game->isWinner = true;
   } else if (getLastValueReceivedOnFace(game->leaderFace) == NEW_TURN_STARTED) {
-    tileState = WAIT_FOR_SHOW_MOVE;
+    startTurn();
   }
 }
 
@@ -126,4 +126,9 @@ void PlayGameTile::showAssignedColor() {
 
 void PlayGameTile::turnOffColor() {
   setColor(OFF);
+}
+
+void PlayGameTile::startTurn() {
+  tileState = WAIT_FOR_SHOW_MOVE;
+  turnCount++;
 }
