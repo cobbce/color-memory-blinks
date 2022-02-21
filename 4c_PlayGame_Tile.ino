@@ -10,8 +10,6 @@ class PlayGameTile : public GameState {
     ETileState tileState;
     Color assignedColor;
     bool moveAcked;
-    byte turnCount;
-    Timer timer;
 
     PlayGameTile(Game &game) : GameState(game, PLAY_GAME, GAME_OVER) {
       init();
@@ -21,7 +19,6 @@ class PlayGameTile : public GameState {
       tileState = TILE_SYNC_STATE;
       assignedColor = game->assignedTileColor;
       moveAcked = false;
-      turnCount = 0;
       
       setColor(OFF);
     }
@@ -80,7 +77,7 @@ void PlayGameTile::waitToShowMove() {
   if (getLastValueReceivedOnFace(game->leaderFace) == SHOW_MOVE_FLAG) {
     setValueSentOnFace(SHOW_MOVE_FLAG, game->leaderFace);
     showAssignedColor();
-    timer.set(max(SHOW_MOVE_DURATION - (50 * turnCount), MIN_SHOW_MOVE_DURATION));
+    game->timer.set(max(SHOW_MOVE_DURATION - (50 * game->turnCount), MIN_SHOW_MOVE_DURATION));
     tileState = TILE_WAIT_FOR_SHOW_MOVE_DONE;
   } else if (getLastValueReceivedOnFace(game->leaderFace) == PLAYER_TURN_STARTED) {
     tileState = TILE_WAIT_FOR_PLAYER_MOVE;
@@ -88,7 +85,7 @@ void PlayGameTile::waitToShowMove() {
 }
 
 void PlayGameTile::waitForShowMoveDone() {
-  if (timer.isExpired()) {
+  if (game->timer.isExpired()) {
     setValueSentOnFace(SHOW_MOVE_DONE_FLAG, game->leaderFace);
     turnOffColor();
     tileState = WAIT_FOR_SHOW_MOVE;
@@ -99,7 +96,7 @@ void PlayGameTile::waitForPlayerMove() {
   if (buttonSingleClicked()) {
     setValueSentOnFace(PLAYER_MOVED_FLAG, game->leaderFace);
     tileState = WAIT_FOR_PLAYER_MOVE_ACK;
-    timer.set(ACK_MOVE_DURATION);
+    game->timer.set(ACK_MOVE_DURATION);
     showAssignedColor();
   } else if (getLastValueReceivedOnFace(game->leaderFace) == GAME_WON) {
     game->isWinner = true;
@@ -113,7 +110,7 @@ void PlayGameTile::waitForPlayerMoveAck() {
     setValueSentOnFace(PLAY_GAME, game->leaderFace);
     moveAcked = true;
   }
-  if (moveAcked && timer.isExpired()) {
+  if (moveAcked && game->timer.isExpired()) {
     turnOffColor();
     moveAcked = false;
     tileState = TILE_WAIT_FOR_PLAYER_MOVE;
@@ -130,5 +127,5 @@ void PlayGameTile::turnOffColor() {
 
 void PlayGameTile::startTurn() {
   tileState = WAIT_FOR_SHOW_MOVE;
-  turnCount++;
+  game->turnCount++;
 }

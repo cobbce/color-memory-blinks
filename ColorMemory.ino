@@ -33,17 +33,19 @@ byte getColorIndex(byte i) {
 Color getColorByIndex(byte i) {
   switch(i) {
     case COLOR_OFFSET:
-      return MAGENTA;
+      return RED;
     case COLOR_OFFSET + 1:
-      return CYAN;
-    case COLOR_OFFSET + 2:
-      return ORANGE;
-    case COLOR_OFFSET + 3:
-      return GREEN;
-    case COLOR_OFFSET + 4:
       return YELLOW;
+    case COLOR_OFFSET + 2:
+      return MAGENTA;
+    case COLOR_OFFSET + 3:
+      return ORANGE;
+    case COLOR_OFFSET + 4:
+      return GREEN;
     case COLOR_OFFSET + 5:
       return BLUE;
+    default:
+      return WHITE;
   }
 }
     

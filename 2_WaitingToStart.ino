@@ -1,13 +1,15 @@
+#define PULSE_LENGTH 2000
+
 class WaitingToStart : public GameState {
   private:
+    Color idleColor;
     
   public:
     WaitingToStart(Game &game) : GameState(game, WAITING_TO_START, SETUP_GAME) {
-      init();
     }
 
     virtual void init() {
-      setColor(YELLOW);
+      idleColor = getColorByIndex(getColorIndex(random(FACE_COUNT - 1)));
       game->init();
     }
     
@@ -19,16 +21,23 @@ class WaitingToStart : public GameState {
   private:
     bool requiredNeighborCount();
     bool initializeLeader();
+    void idlePulse();
     static void countNeighbors(Game* game, byte face);
 };
 
 void WaitingToStart::loopForState() {
+  idlePulse();
+  
   if (buttonSingleClicked()) {
     if (requiredNeighborCount()) {
       initializeLeader();
       changeState(SETUP_GAME);
     }
   }
+}
+
+void WaitingToStart::idlePulse() {
+  setColor(dim(idleColor, (sin8_C(map(millis() % PULSE_LENGTH, 0, PULSE_LENGTH, 0, 255)) * (int)155 / (int)255) + 100));
 }
 
 bool WaitingToStart::requiredNeighborCount() {

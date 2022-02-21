@@ -81,13 +81,13 @@ bool SetupGame::neighborsAreInSetupState() {
   
   if (neighborsReadyCount == game->tileCount) {
     neighborsInSetupState = true;
-//    Serial.println("neighborsInSetupState true");
   }
   return neighborsInSetupState;
 }
 
 void SetupGame::sendNeighborColors() {
   byte neighborsAcknowledged = 0;
+  setColor(WHITE);
   
   FOREACH_FACE(face) {
     if (EMPTY == game->neighbors[face]) {
@@ -105,7 +105,6 @@ void SetupGame::sendNeighborColors() {
   }
 
   if (neighborsAcknowledged == game->tileCount) {
-//    Serial.println("leader setup complete");
     setupComplete = true;
     gameStartTimer.set(GAME_START_DELAY);
   }

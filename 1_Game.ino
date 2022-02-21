@@ -1,7 +1,9 @@
 class Game {
   public:
-    //universal state
+    // universal state
     bool isWinner;
+    byte turnCount;
+    Timer timer;
     
     //leader state
     byte neighbors[FACE_COUNT];
@@ -16,6 +18,7 @@ class Game {
 
     void init() {
       isWinner = false;
+      turnCount = 0;
       FOREACH_FACE(f) { neighbors[f] = EMPTY; }
       isLeader = false;
       tileCount = 0;
@@ -53,10 +56,6 @@ class GameState {
       checkNeighborsForStateChange();
       checkAlone();
     }
-    
-//    void showColor() {
-//      setColor(game->color);
-//    }
     
     EGameState getGameState();
     
