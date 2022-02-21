@@ -4,6 +4,7 @@
 
 Game game = Game();
 GameState* currentState;
+EGameState gameStateEnum = -1;
 
 WaitingToStart w = WaitingToStart(game);
 SetupGame s = SetupGame(game);
@@ -16,6 +17,10 @@ GameOver g = GameOver(game);
 ////////////////
 
 void changeState(EGameState nextState) {
+  if (gameStateEnum == nextState) {
+    return;
+  }
+  gameStateEnum = nextState;
   switch(nextState) {
     case WAITING_TO_START:
       currentState = &w;
