@@ -5,16 +5,16 @@ There is no custom setup, the project can be loaded just like any tutorial proje
 
 The project uses multiple files just for organization. This is supported by the Arduino editor loaded as tabs.
 
-ColorMemory.ino is the starting file and declares a few constants and utilities.
-The number prefixes for each file help organize the tabs in the Arduino editor in a logical order.
+The number prefixes in the file names help organize the tabs in the Arduino editor in a logical order.
 
-1_Game - declares game state and shared functionality.
-2_WaitingToStart - represents idle state in between games. Waits for a button click with 2-6 connected blinks attached to start.
-3_SetupGame - initialize a new game, assign a color to each tile. Setup leader state to drive game logic.
-4_PlayGame_Leader - represents the leader tile that generates the sequences and processes player moves
-4_PlayGame_Tile - represents the game pieces that are assigned turns in the sequence by the leader.
-5_GameOver - game over state that displays player score
-z_Main - The setup and loop methods that drive the game, plus a state transition function to switch between the various game states described above.
+* ColorMemory.ino is the starting file and declares a few constants and utilities.
+* 1_Game - declares game state and shared functionality.
+* 2_WaitingToStart - represents idle state in between games. Waits for a button click with 2-6 connected blinks attached to start.
+* 3_SetupGame - initialize a new game, assign a color to each tile. Setup leader state to drive game logic.
+* 4_PlayGame_Leader - represents the leader tile that generates the sequences and processes player moves
+* 4_PlayGame_Tile - represents the game pieces that are assigned turns in the sequence by the leader.
+* 5_GameOver - game over state that displays player score
+* z_Main - The setup and loop methods that drive the game, plus a state transition function to switch between the various game states described above.
 
 # Playing the Game
 Setup:
