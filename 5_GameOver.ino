@@ -10,7 +10,7 @@ class GameOver : public GameState {
 
     void init() override {
       setColor(getGameOverColor());
-      game->timer.set(2000);
+      game->timer.set(3500);
     }
 
     Color getGameOverColor() {
